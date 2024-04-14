@@ -181,7 +181,7 @@ const fillTable = (data) => {
 };
 
 const draw_chart = (data) => {
-  const width = 1000;
+  const width = 1200;
   const height = 800;
   const marginTop = 20;
   const marginRight = 20;
@@ -222,6 +222,8 @@ const draw_chart = (data) => {
 
   // Удаление существующих элементов
   d3.select("#chart").selectAll("g.x-axis").remove();
+  d3.select("#chart").selectAll("g.x-grid").remove();
+  d3.select("#chart").selectAll("g.y-grid").remove();
   d3.select("#chart").selectAll("g.y-axis").remove();
   d3.select("#chart").selectAll("g.lines").remove();
   d3.select("#chart").selectAll(".legend").remove();
