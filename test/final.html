@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Visualization</title>
-
+    <title>Simple Dimple</title>
 </head>
 <body>
 
@@ -18,7 +17,7 @@
     </div>
 </div>
 
-<svg id="chart"></svg>
+<svg id="chart"  ></svg>
 </div>
 <div id="content">
     <table style="width: 50%">
@@ -110,19 +109,18 @@
 
     const buildButtonCallback = () => {
         const filters = getAllFilters()
+        console.log(filters)
         let resultData = Array.from(data)
 
         for (const filter of filters) {
             let selectedOptions = []
-            for (const option of filter.options) {
-                if (option.selected) {
-                    selectedOptions.push(option.value)
-                }
-            }
+            console.log(filter.value)
+            selectedOptions.push(filter.value)
             if (selectedOptions.length > 0) {
                 resultData = resultData.filter(
                     item => selectedOptions.includes(item[filter.id.replace(FILTER, '')]))
             }
+            console.log(selectedOptions)
         }
 
         resultData = resultData.sort(getSortsData())
@@ -141,42 +139,49 @@
     })
 
     // filters
+    // const FILTER_SUFFIX = 'Filter';
+
+
+    const getAllFilters = () => {
+        let filters = [];
+        for (const filterName of FILTERED_FIELDS) {
+            const filterInput = document.getElementById(filterName + FILTER + '-input'); // Получаем input элемент
+            filters.push(filterInput);
+        }
+        return filters;
+    }
+
+
     const initFilterHtml = filterName => {
-        const filterId = filterName + FILTER
-        return `<select name="${filterName}" id="${filterId}" multiple size="20"></select>`
+        const filterId = filterName + FILTER;
+        return `<input list="${filterId}" id="${filterId}-input" placeholder="Search ${filterName}...">
+            <datalist id="${filterId}"></datalist>`;
     }
 
     const initFiltersHtml = () => {
-        const filtersDiv = document.getElementById('filters')
-        filtersDiv.innerHTML += `<h2>Фильтры</h2>`
+        const filtersDiv = document.getElementById('filters');
+        filtersDiv.innerHTML = `<h2>Фильтры</h2>`; // Используйте присваивание для очистки предыдущего содержимого
         FILTERED_FIELDS.forEach(filteredFieldName => {
-            filtersDiv.innerHTML += initFilterHtml(filteredFieldName)
-        })
+            filtersDiv.innerHTML += initFilterHtml(filteredFieldName);
+        });
     }
 
-    const getAllFilters = () => {
-        let filters = []
-        for (const filterName of FILTERED_FIELDS) {
-            const filter = document.getElementById(filterName + FILTER)
-            filters.push(filter)
-        }
-        return filters
-    }
-
-    const fillFilter = (data, filterId) => {
-        d3.select('#' + filterId + FILTER)
+    const fillFilter = (data, filterName) => {
+        const filterId = filterName + FILTER;
+        d3.select('#' + filterId)
             .selectAll('option')
             .data(data)
             .join('option')
-            .html(data => `<option value="${data}">${data}</option>`)
+            .attr('value', data => data);
     }
 
     const fillAllFilters = data => {
         FILTERED_FIELDS.forEach(filterName => {
-            const keys = groupDataByField(data, filterName).keys().toArray().sort()
-            fillFilter(keys, filterName)
-        })
+            const keys = groupDataByField(data, filterName).keys().toArray().sort();
+            fillFilter(keys, filterName);
+        });
     }
+
 
     // chart selectors
     const initChartSelectorsHtml = () => {
@@ -296,35 +301,37 @@
             .range([height - marginBottom, marginTop])
 
         // отрисованная ось x
-        if (d3.select('#chart g.x-axis').empty()) {
-            svg.append('g')
-                .attr("class", "x-axis")
-                .attr('transform', `translate(0,${height - marginBottom})`)
-                .call(d3.axisBottom(xScale))
-                .selectAll("text")
-                .attr("transform", "rotate(-20)")
-                .style("text-anchor", "end")
-        } else {
-            d3.select('#chart g.x-axis')
-                .attr('transform', `translate(0,${height - marginBottom})`)
-                .transition()
-                .duration(animationDuration)
-                .call(d3.axisBottom(xScale))
-        }
+        d3.select('#chart').selectAll('g.x-axis')
+            .data([0]) // Используем массив из одного элемента, чтобы обеспечить создание или обновление одного элемента 'g.x-axis'
+            .join(
+                enter => enter.append('g') // Добавление нового элемента, если он отсутствует
+                    .attr('class', 'x-axis')
+                    .attr('transform', `translate(0,${height - marginBottom})`)
+                    .call(d3.axisBottom(xScale)) // Инициализируем ось X
+                    .selectAll("text")
+                    .attr("transform", "rotate(-20)")
+                    .style("text-anchor", "end"),
+                update => update // Обновление существующего элемента
+                    .call(g => g.transition() // Добавляем анимацию для обновления
+                        .duration(animationDuration)
+                        .attr('transform', `translate(0,${height - marginBottom})`)
+                        .call(d3.axisBottom(xScale))) // Обновляем ось X
+            );
 
         // отрисованная ось y
-        if (d3.select('#chart g.y-axis').empty()) {
-            svg.append('g')
-                .attr("class", "y-axis")
-                .attr('transform', `translate(${marginLeft},0)`)
-                .call(d3.axisLeft(yScale))
-        } else {
-            d3.select('#chart g.y-axis')
-                .attr('transform', `translate(${marginLeft},0)`)
-                .transition()
-                .duration(animationDuration)
-                .call(d3.axisLeft(yScale))
-        }
+
+        d3.select('#chart').selectAll('g.y-axis')
+            .data([0]) // Используем массив из одного элемента, чтобы обеспечить создание или обновление одного элемента 'g.y-axis'
+            .join(
+                enter => enter.append('g') // Добавление нового элемента, если он отсутствует
+                    .attr('class', 'y-axis')
+                    .attr('transform', `translate(${marginLeft},0)`),
+                update => update // Обновление существующего элемента
+            )
+            .call(d3.axisLeft(yScale)) // Применяем ось Y ко всем элементам, как к новым, так и к обновленным
+            .attr('transform', `translate(${marginLeft},0)`) // Обновляем положение оси
+            .transition()
+            .duration(animationDuration);
 
         function makeXGridlines() {
             return d3.axisBottom(xScale)
