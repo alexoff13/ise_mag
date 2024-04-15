@@ -187,7 +187,7 @@ const draw_chart = (data) => {
   const marginRight = 20;
   const marginBottom = 30;
   const marginLeft = 30;
-  const animationDuration = 3000;
+  const animationDuration = 7000;
 
   let resData = [];
 
